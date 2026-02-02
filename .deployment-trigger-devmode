@@ -1,0 +1,4 @@
+Deployment trigger: Feb 2, 2026 - Enable DEV_MODE for CF Access bypass
+This enables DEV_MODE to bypass Cloudflare Access authentication temporarily.
+Timestamp: 2026-02-02T17:55:00Z
+Action: Set DEV_MODE=true to skip CF_ACCESS requirements
