@@ -294,6 +294,8 @@ if (isOpenAI) {
     config.agents.defaults.models['openai/gpt-4o-mini'] = { alias: 'GPT-4o Mini' };
     config.agents.defaults.models['openai/gpt-4-turbo'] = { alias: 'GPT-4 Turbo' };
     config.agents.defaults.models['openai/gpt-3.5-turbo'] = { alias: 'GPT-3.5 Turbo' };
+    // Ensure model object exists and set primary model
+    config.agents.defaults.model = config.agents.defaults.model || {};
     config.agents.defaults.model.primary = 'openai/gpt-4o';
 } else {
     // Default to Anthropic without custom base URL (uses built-in pi-ai catalog)

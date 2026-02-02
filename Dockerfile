@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y xz-utils ca-certificates rsync \
 RUN npm install -g pnpm
 
 # Install moltbot (CLI is still named clawdbot until upstream renames)
-# Use latest stable version
-RUN npm install -g clawdbot@latest \
+# Use a known working version that supports the current configuration
+RUN npm install -g clawdbot@2026.1.24-2 \
     && clawdbot --version \
     && which clawdbot
 
@@ -28,7 +28,7 @@ RUN mkdir -p /root/.clawdbot \
     && mkdir -p /root/clawd/skills
 
 # Copy startup script
-# Build cache bust: 2026-02-02-v27-fix-clawdbot-install
+# Build cache bust: 2026-02-02-v28-fix-exit-code-1
 COPY start-moltbot.sh /usr/local/bin/start-moltbot.sh
 RUN chmod +x /usr/local/bin/start-moltbot.sh
 
