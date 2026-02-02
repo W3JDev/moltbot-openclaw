@@ -274,6 +274,27 @@ if (isOpenAI) {
     config.agents.defaults.models['anthropic/claude-sonnet-4-5-20250929'] = { alias: 'Sonnet 4.5' };
     config.agents.defaults.models['anthropic/claude-haiku-4-5-20251001'] = { alias: 'Haiku 4.5' };
     config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5-20251101';
+} else if (process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY) {
+    // Configure standard OpenAI when OPENAI_API_KEY is set but no Anthropic key
+    console.log('Configuring standard OpenAI provider');
+    config.models = config.models || {};
+    config.models.providers = config.models.providers || {};
+    config.models.providers.openai = {
+        api: 'openai-responses',
+        models: [
+            { id: 'gpt-4o', name: 'GPT-4o', contextWindow: 128000 },
+            { id: 'gpt-4o-mini', name: 'GPT-4o Mini', contextWindow: 128000 },
+            { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', contextWindow: 128000 },
+            { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', contextWindow: 16385 },
+        ]
+    };
+    // Add models to the allowlist so they appear in /models
+    config.agents.defaults.models = config.agents.defaults.models || {};
+    config.agents.defaults.models['openai/gpt-4o'] = { alias: 'GPT-4o' };
+    config.agents.defaults.models['openai/gpt-4o-mini'] = { alias: 'GPT-4o Mini' };
+    config.agents.defaults.models['openai/gpt-4-turbo'] = { alias: 'GPT-4 Turbo' };
+    config.agents.defaults.models['openai/gpt-3.5-turbo'] = { alias: 'GPT-3.5 Turbo' };
+    config.agents.defaults.model.primary = 'openai/gpt-4o';
 } else {
     // Default to Anthropic without custom base URL (uses built-in pi-ai catalog)
     config.agents.defaults.model.primary = 'anthropic/claude-opus-4-5';
