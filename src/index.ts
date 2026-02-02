@@ -162,9 +162,28 @@ app.route("/cdp", cdp);
 // Middleware: Validate required environment variables (skip in dev mode and for debug routes)
 app.use("*", async (c, next) => {
   const url = new URL(c.req.url);
+  const path = url.pathname;
 
   // Skip validation for debug routes (they have their own enable check)
-  if (url.pathname.startsWith("/debug")) {
+  if (path.startsWith("/debug")) {
+    return next();
+  }
+
+  // Skip validation for public routes
+  const publicPaths = [
+    "/sandbox-health",
+    "/logo.png",
+    "/logo-small.png",
+    "/api/status",
+    "/telegram", // Telegram webhook (no auth)
+    "/cdp", // CDP routes use separate auth
+  ];
+
+  const isPublicPath =
+    publicPaths.some((publicPath) => path === publicPath) ||
+    path.startsWith("/_admin/assets/");
+
+  if (isPublicPath) {
     return next();
   }
 
@@ -205,29 +224,8 @@ app.use("*", async (c, next) => {
   return next();
 });
 
-// Middleware: Cloudflare Access authentication for protected routes
-app.use("*", async (c, next) => {
-  const url = new URL(c.req.url);
-  const path = url.pathname;
-
-  // Skip auth for public routes that were already handled
-  const publicPaths = [
-    "/sandbox-health",
-    "/logo.png",
-    "/logo-small.png",
-    "/api/status",
-    "/telegram", // Telegram webhook (no auth)
-    "/cdp", // CDP routes use separate auth
-  ];
-
-  const isPublicPath =
-    publicPaths.some((publicPath) => path === publicPath) ||
-    path.startsWith("/_admin/assets/");
-
-  if (isPublicPath) {
-    return next();
-  }
-
+// Create auth middleware for protected routes only
+const authMiddleware = async (c: any, next: any) => {
   // Determine response type based on Accept header
   const acceptsHtml = c.req.header("Accept")?.includes("text/html");
   const middleware = createAccessMiddleware({
@@ -236,12 +234,14 @@ app.use("*", async (c, next) => {
   });
 
   return middleware(c, next);
-});
+};
 
 // Mount API routes (protected by Cloudflare Access)
+app.use("/api/*", authMiddleware);
 app.route("/api", api);
 
 // Mount Admin UI routes (protected by Cloudflare Access)
+app.use("/_admin/*", authMiddleware);
 app.route("/_admin", adminUi);
 
 // Mount debug routes (protected by Cloudflare Access, only when DEBUG_ROUTES is enabled)
@@ -251,12 +251,14 @@ app.use("/debug/*", async (c, next) => {
   }
   return next();
 });
+app.use("/debug/*", authMiddleware);
 app.route("/debug", debug);
 
 // =============================================================================
-// CATCH-ALL: Proxy to Moltbot gateway
+// CATCH-ALL: Proxy to Moltbot gateway (protected by Cloudflare Access)
 // =============================================================================
 
+app.use("*", authMiddleware);
 app.all("*", async (c) => {
   const sandbox = c.get("sandbox");
   const request = c.req.raw;
