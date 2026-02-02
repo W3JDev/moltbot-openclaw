@@ -53,6 +53,25 @@ publicRoutes.get('/api/status', async (c) => {
   }
 });
 
+// POST /telegram - Telegram webhook endpoint (no auth required)
+publicRoutes.post('/telegram', async (c) => {
+  const sandbox = c.get('sandbox');
+  const request = c.req.raw;
+  
+  // Proxy the Telegram webhook directly to the Moltbot container
+  try {
+    const httpResponse = await sandbox.containerFetch(request, MOLTBOT_PORT);
+    return new Response(httpResponse.body, {
+      status: httpResponse.status,
+      statusText: httpResponse.statusText,
+      headers: httpResponse.headers,
+    });
+  } catch (error) {
+    console.error('[TELEGRAM] Webhook proxy failed:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
 // GET /_admin/assets/* - Admin UI static assets (CSS, JS need to load for login redirect)
 // Assets are built to dist/client with base "/_admin/"
 publicRoutes.get('/_admin/assets/*', async (c) => {
